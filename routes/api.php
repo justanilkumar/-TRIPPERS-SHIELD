@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 // Policy Request Intake & Queries
 Route::post('/policy-requests', [PolicyRequestController::class, 'store']);
+Route::post('/policy-requests/bulk-csv', [PolicyRequestController::class, 'bulkCsv']);
 Route::get('/policy-requests', [PolicyRequestController::class, 'index']);
 Route::get('/policy-requests/{id}', [PolicyRequestController::class, 'show']);
 

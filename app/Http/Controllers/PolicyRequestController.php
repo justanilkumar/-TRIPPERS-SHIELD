@@ -6,6 +6,7 @@ use App\Exceptions\PricingValidationException;
 use App\Http\Requests\StorePolicyRequest;
 use App\Http\Resources\PolicyRequestResource;
 use App\Models\PolicyRequest;
+use App\Services\Intake\BulkCsvIntakeService;
 use App\Services\Intake\PolicyIntakeService;
 use App\Services\Issuance\IssuanceService;
 use Illuminate\Http\JsonResponse;
@@ -102,5 +103,24 @@ class PolicyRequestController extends Controller
         $reconciled = $issuanceService->reconcile($policy);
 
         return (new PolicyRequestResource($reconciled->load(['stateHistory', 'attempts'])))->response();
+    }
+
+    /**
+     * Bulk intake policy requests via CSV file or raw CSV text.
+     */
+    public function bulkCsv(Request $request, BulkCsvIntakeService $bulkService): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required_without:csv_text', 'file', 'mimes:csv,txt'],
+            'csv_text' => ['required_without:file', 'string'],
+        ]);
+
+        $content = $request->hasFile('file')
+            ? file_get_contents($request->file('file')->getRealPath())
+            : $request->input('csv_text');
+
+        $report = $bulkService->process($content);
+
+        return response()->json($report, 200);
     }
 }
