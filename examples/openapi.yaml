@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: PolicyFlow Engine API
+  description: Fault-Tolerant Insurance Issuance & Reconciliation Engine
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8000/api
+    description: Local Development Server
+
+paths:
+  /policy-requests:
+    post:
+      summary: Policy request intake (idempotent)
+      description: Create a new policy request or safely return existing request without creating duplicates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyIntakePayload'
+      responses:
+        '201':
+          description: Policy request created and validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '200':
+          description: Existing duplicate policy request safely returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '422':
+          description: Validation error
+    get:
+      summary: List policy requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [RECEIVED, VALIDATED, SUBMITTED, PENDING_CONFIRMATION, ISSUED, FAILED, NEEDS_RECONCILIATION]
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated list of policy requests
+
+  /policy-requests/{id}:
+    get:
+      summary: Get policy request details and audit trail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Policy details with audit trail and attempts
+
+  /policy-requests/{id}/submit:
+    post:
+      summary: Start or safely resume issuance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: async
+          in: query
+          schema:
+            type: boolean
+          description: Set to true to queue for asynchronous background worker
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scenario:
+                  type: string
+                  enum: [SUCCESS, TIMEOUT_AFTER_ISSUE, TEMPORARY_FAILURE, DELAYED_CALLBACK, DUPLICATE_CALLBACK]
+      responses:
+        '200':
+          description: Issuance completed
+        '202':
+          description: Queued for async worker
+
+  /policy-requests/{id}/reconcile:
+    post:
+      summary: Reconcile request against mock external insurer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reconciled state
+
+  /mock-insurer/callback:
+    post:
+      summary: Webhook receiver for mock insurer events (idempotent)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallbackPayload'
+      responses:
+        '200':
+          description: Callback processed or duplicate safely acknowledged
+
+  /mock-insurer/status/{reference}:
+    get:
+      summary: External provider policy status lookup
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status found
+
+  /policy-requests/bulk-csv:
+    post:
+      summary: Bulk CSV policy intake
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                csv_text:
+                  type: string
+      responses:
+        '200':
+          description: Row-level processing report
+
+components:
+  schemas:
+    PolicyIntakePayload:
+      type: object
+      required:
+        - client_request_id
+        - agent_id
+        - customer_name
+        - date_of_birth
+        - destination
+        - trip_start
+        - trip_end
+        - plan_code
+        - sum_insured
+      properties:
+        client_request_id:
+          type: string
+          example: "AGT-2026-0001"
+        agent_id:
+          type: string
+          example: "AGENT-17"
+        customer_name:
+          type: string
+          example: "Sample Customer"
+        date_of_birth:
+          type: string
+          format: date
+          example: "1998-04-10"
+        destination:
+          type: string
+          enum: [DOMESTIC, INTERNATIONAL]
+          example: "INTERNATIONAL"
+        trip_start:
+          type: string
+          format: date
+          example: "2026-11-10"
+        trip_end:
+          type: string
+          format: date
+          example: "2026-11-14"
+        plan_code:
+          type: string
+          enum: [BASIC, PLUS, PREMIUM]
+          example: "PLUS"
+        sum_insured:
+          type: number
+          enum: [100000, 300000, 500000]
+          example: 300000
+
+    PolicyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+            client_request_id:
+              type: string
+            status:
+              type: string
+            pricing:
+              type: object
+            policy_number:
+              type: string
+
+    CallbackPayload:
+      type: object
+      required:
+        - event_id
+      properties:
+        event_id:
+          type: string
+          example: "EVT-2026-999"
+        provider_reference:
+          type: string
+        client_request_id:
+          type: string
+        event_type:
+          type: string
+          example: "POLICY_ISSUED"
+        policy_number:
+          type: string
+        status:
+          type: string
+          enum: [ISSUED, FAILED]

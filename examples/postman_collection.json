@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "PolicyFlow API Collection",
+    "description": "Complete Postman collection for PolicyFlow Insurance Engine",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "policyId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Policy Intake (Create New / Return Existing)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"client_request_id\": \"AGT-2026-0001\",\n  \"agent_id\": \"AGENT-17\",\n  \"customer_name\": \"Sample Customer\",\n  \"date_of_birth\": \"1998-04-10\",\n  \"destination\": \"INTERNATIONAL\",\n  \"trip_start\": \"2026-11-10\",\n  \"trip_end\": \"2026-11-14\",\n  \"plan_code\": \"PLUS\",\n  \"sum_insured\": 300000\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/policy-requests", "host": ["{{baseUrl}}"], "path": ["policy-requests"] }
+      }
+    },
+    {
+      "name": "2. Get Policy Details & Audit Trail",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/policy-requests/{{policyId}}", "host": ["{{baseUrl}}"], "path": ["policy-requests", "{{policyId}}"] }
+      }
+    },
+    {
+      "name": "3. Submit Issuance (Success)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"scenario\": \"SUCCESS\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/policy-requests/{{policyId}}/submit", "host": ["{{baseUrl}}"], "path": ["policy-requests", "{{policyId}}", "submit"] }
+      }
+    },
+    {
+      "name": "4. Submit Issuance (Simulate Timeout)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"scenario\": \"TIMEOUT_AFTER_ISSUE\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/policy-requests/{{policyId}}/submit", "host": ["{{baseUrl}}"], "path": ["policy-requests", "{{policyId}}", "submit"] }
+      }
+    },
+    {
+      "name": "5. Reconcile Policy",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/policy-requests/{{policyId}}/reconcile", "host": ["{{baseUrl}}"], "path": ["policy-requests", "{{policyId}}", "reconcile"] }
+      }
+    },
+    {
+      "name": "6. Webhook Callback (Idempotent)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"EVT-POSTMAN-001\",\n  \"provider_reference\": \"REF-MOCK-001\",\n  \"client_request_id\": \"AGT-2026-0001\",\n  \"event_type\": \"POLICY_ISSUED\",\n  \"policy_number\": \"POL-POSTMAN-001\",\n  \"status\": \"ISSUED\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/mock-insurer/callback", "host": ["{{baseUrl}}"], "path": ["mock-insurer", "callback"] }
+      }
+    },
+    {
+      "name": "7. List Policies (Filter by Status)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/policy-requests?status=ISSUED",
+          "host": ["{{baseUrl}}"],
+          "path": ["policy-requests"],
+          "query": [{ "key": "status", "value": "ISSUED" }]
+        }
+      }
+    }
+  ]
+}

@@ -81,6 +81,7 @@ class PolicyRequestController extends Controller
 
     /**
      * Start or safely resume issuance.
+     * Supports synchronous processing or asynchronous queue worker execution (?async=true).
      */
     public function submit(Request $request, int $id, IssuanceService $issuanceService): JsonResponse
     {
@@ -88,6 +89,17 @@ class PolicyRequestController extends Controller
 
         // Scenario can be specified in header or payload for testing / deterministic simulation
         $scenario = $request->input('scenario') ?: $request->header('X-Mock-Scenario');
+
+        if ($request->boolean('async')) {
+            \App\Jobs\ProcessPolicyIssuanceJob::dispatch($policy->id, $scenario);
+
+            return response()->json([
+                'message' => 'Issuance job successfully queued for asynchronous processing.',
+                'policy_id' => $policy->id,
+                'status' => $policy->status,
+                'queued' => true,
+            ], 202);
+        }
 
         $updated = $issuanceService->submit($policy, $scenario);
 
