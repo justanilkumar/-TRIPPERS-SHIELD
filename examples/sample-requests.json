@@ -1,0 +1,49 @@
+{
+  "intake_standard": {
+    "client_request_id": "AGT-2026-0001",
+    "agent_id": "AGENT-17",
+    "customer_name": "Sample Customer",
+    "date_of_birth": "1998-04-10",
+    "destination": "INTERNATIONAL",
+    "trip_start": "2026-11-10",
+    "trip_end": "2026-11-14",
+    "plan_code": "PLUS",
+    "sum_insured": 300000
+  },
+  "intake_domestic_basic": {
+    "client_request_id": "AGT-2026-0002",
+    "agent_id": "AGENT-05",
+    "customer_name": "Rohan Sharma",
+    "date_of_birth": "1990-06-15",
+    "destination": "DOMESTIC",
+    "trip_start": "2026-12-01",
+    "trip_end": "2026-12-05",
+    "plan_code": "BASIC",
+    "sum_insured": 100000
+  },
+  "intake_senior_premium": {
+    "client_request_id": "AGT-2026-0003",
+    "agent_id": "AGENT-12",
+    "customer_name": "Devi Prasad",
+    "date_of_birth": "1955-03-20",
+    "destination": "INTERNATIONAL",
+    "trip_start": "2026-12-10",
+    "trip_end": "2026-12-20",
+    "plan_code": "PREMIUM",
+    "sum_insured": 500000
+  },
+  "submit_scenarios": {
+    "success": { "scenario": "SUCCESS" },
+    "timeout": { "scenario": "TIMEOUT_AFTER_ISSUE" },
+    "temporary_failure": { "scenario": "TEMPORARY_FAILURE" },
+    "delayed_callback": { "scenario": "DELAYED_CALLBACK" }
+  },
+  "callback_payload": {
+    "event_id": "EVT-MOCK-9001",
+    "provider_reference": "REF-XXXXX",
+    "client_request_id": "AGT-2026-0001",
+    "event_type": "POLICY_ISSUED",
+    "policy_number": "POL-MOCK-9001",
+    "status": "ISSUED"
+  }
+}
